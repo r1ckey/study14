@@ -423,14 +423,16 @@
             });
 
             // Custom renderer for mermaid blocks
-            const renderer = new marked.Renderer();
-            renderer.code = function(code, lang) {
-                if (lang === 'mermaid') {
-                    return `<div class="mermaid">${code}</div>`;
+            const renderer = {
+                code(token) {
+                    if (token.lang === 'mermaid') {
+                        return `<div class="mermaid">${token.text}</div>`;
+                    }
+                    return `<pre><code class="language-${token.lang}">${token.text}</code></pre>`;
                 }
-                return `<pre><code class="language-${lang}">${code}</code></pre>`;
             };
-            marked.setOptions({ 
+
+            marked.use({ 
                 renderer: renderer,
                 breaks: true,
                 gfm: true
