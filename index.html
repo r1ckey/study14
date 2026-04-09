@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SQL Mastery: A professional guide to data architecture and practical SQL patterns.">
+    <title>SQL Mastery: Architecture & Playbook</title>
+    
+    <!-- Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #020617;
+            --bg-darker: #010409;
+            --card-glass: rgba(15, 23, 42, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.1);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-glow: #06b6d4;
+            --accent-secondary: #3b82f6;
+            --gradient-premium: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            cursor: default;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+            color: var(--text-primary);
+            font-family: 'Outfit', 'Inter', sans-serif;
+            line-height: 1.6;
+            overflow: hidden; /* Desktop app feel */
+            height: 100vh;
+        }
+
+        .app-shell {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            height: 100vh;
+            padding: 1.5rem;
+            gap: 1.5rem;
+        }
+
+        /* Sidebar Glassmorphism */
+        .sidebar {
+            background: var(--card-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 28px;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .brand-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .brand-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: var(--gradient-premium);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .brand-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            padding: 1.2rem;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent-glow);
+            text-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+        }
+
+        .navigation {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .nav-group-title {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-group-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-glass);
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 1rem 1.2rem;
+            border-radius: 16px;
+            background: transparent;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: var(--transition-smooth);
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(8px);
+        }
+
+        .nav-item.active {
+            background: rgba(6, 182, 212, 0.15);
+            border-color: rgba(6, 182, 212, 0.3);
+            box-shadow: inset 0 0 20px rgba(6, 182, 212, 0.05);
+        }
+
+        .nav-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-glow);
+            font-weight: 700;
+            width: 30px;
+        }
+
+        .nav-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .check-circle {
+            margin-left: auto;
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            transition: var(--transition-smooth);
+        }
+
+        .nav-item.completed .check-circle {
+            background: var(--accent-secondary);
+            border-color: var(--accent-secondary);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            position: relative;
+        }
+
+        .nav-item.completed .check-circle::after {
+            content: '✓';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        /* Main Content Glass */
+        .main-stage {
+            background: var(--card-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: 28px;
+            overflow-y: auto;
+            position: relative;
+            padding: 4rem;
+        }
+
+        .dashboard-home {
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .hero-banner {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: radial-gradient(circle at center, rgba(6, 182, 212, 0.15) 0%, transparent 70%);
+            border-radius: 32px;
+        }
+
+        .hero-banner h2 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            letter-spacing: -2px;
+        }
+
+        .chart-section {
+            max-width: 650px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 3rem;
+            border-radius: 32px;
+            border: 1px solid var(--border-glass);
+        }
+
+        /* Reader View */
+        .reader-view {
+            display: none;
+            animation: fadeIn 0.4s ease;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .reader-header {
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-complete {
+            background: var(--gradient-premium);
+            border: none;
+            padding: 1rem 2.5rem;
+            border-radius: 16px;
+            color: white;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+            transition: var(--transition-smooth);
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.2);
+            font-size: 1rem;
+        }
+
+        .btn-complete:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(6, 182, 212, 0.4);
+        }
+
+        .btn-complete.active {
+            background: #10b981;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Markdown Elite Styling */
+        .markdown-elite {
+            color: #cbd5e1;
+            font-size: 1.15rem;
+            line-height: 1.8;
+        }
+
+        .markdown-elite h1 { font-size: 3rem; font-weight: 800; color: #fff; margin-bottom: 2rem; background: var(--gradient-premium); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .markdown-elite h2 { font-size: 2rem; font-weight: 700; color: var(--accent-glow); margin: 3rem 0 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); }
+        .markdown-elite h3 { font-size: 1.5rem; font-weight: 700; color: #fff; margin: 2rem 0 1rem; }
+        .markdown-elite p { margin-bottom: 1.5rem; }
+        .markdown-elite pre { background: #0b1120; padding: 2rem; border-radius: 20px; overflow-x: auto; margin: 2rem 0; border: 1px solid rgba(255,255,255,0.1); position: relative; }
+        .markdown-elite code { font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; color: #2dd4bf; }
+        .markdown-elite blockquote { border-left: 6px solid var(--accent-glow); background: rgba(6, 182, 212, 0.1); padding: 2rem; margin: 2.5rem 0; border-radius: 0 20px 20px 0; color: #fff; }
+        .markdown-elite blockquote strong { color: var(--accent-glow); font-size: 1.2rem; display: block; margin-bottom: 0.5rem; }
+        .markdown-elite hr { border: 0; height: 1px; background: var(--border-glass); margin: 4rem 0; }
+        .markdown-elite ul { margin-left: 2rem; margin-bottom: 2rem; }
+        .markdown-elite li { margin-bottom: 1rem; }
+        
+        .mermaid { background: rgba(0,0,0,0.2) !important; padding: 40px; border-radius: 24px; margin: 40px 0; border: 1px solid var(--border-glass); }
+
+        /* Loader */
+        #loader { position: fixed; inset: 0; background: var(--bg-dark); z-index: 9999; display: flex; justify-content: center; align-items: center; transition: opacity 0.8s ease; }
+        .quantum-spinner { width: 80px; height: 80px; border: 4px solid rgba(6, 182, 212, 0.1); border-top: 4px solid var(--accent-glow); border-radius: 50%; animation: spin 0.8s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(6, 182, 212, 0.3); }
+
+        @media (max-width: 1200px) {
+            .app-shell { grid-template-columns: 1fr; height: auto; overflow: auto; }
+            .sidebar { height: auto; position: relative; }
+            .main-stage { height: auto; padding: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader" id="loading-overlay"><div class="quantum-spinner"></div></div>
+
+    <div class="app-shell" id="main-app-container">
+        <!-- Navigation Sidebar -->
+        <aside class="sidebar" id="navigation-sidebar">
+            <header class="brand-section">
+                <h1 class="brand-title" id="app-title">SQL MASTERY</h1>
+                <p class="brand-subtitle" id="app-subtitle">Architecture & Practical Playbook</p>
+            </header>
+
+            <section class="stats-overview">
+                <div class="stat-item" id="progress-card">
+                    <span class="stat-label">Progress</span>
+                    <div class="stat-value" id="global-progress-value">0%</div>
+                </div>
+                <div class="stat-item" id="modules-card">
+                    <span class="stat-label">Mastered</span>
+                    <div class="stat-value" id="global-completed-count">0/11</div>
+                </div>
+            </section>
+
+            <nav class="navigation" id="axis-navigation">
+                <!-- Navigation groups injected here -->
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-stage" id="content-anchor">
+            <!-- Home Dashboard -->
+            <div id="dashboard-view" class="dashboard-home">
+                <section class="hero-banner">
+                    <h2 id="welcome-message">Architect the Data.</h2>
+                    <p style="font-size: 1.25rem; color: var(--text-secondary);">
+                        単なる暗記ではなく、「なぜそう書くのか？」という設計思想と内部挙動からSQLを極めましょう。
+                    </p>
+                </section>
+
+                <div class="chart-section" id="radar-chart-container">
+                    <canvas id="masteryRadar"></canvas>
+                </div>
+            </div>
+
+            <!-- Content Reader -->
+            <div id="reader-view" class="reader-view">
+                <header class="reader-header" id="reader-top-bar">
+                    <span id="active-module-title" style="font-size: 1.2rem; font-weight: 800; color: var(--accent-glow);">PHASE 1.1</span>
+                    <button class="btn-complete" id="completion-trigger">完了としてマーク</button>
+                </header>
+                <article id="article-canvas" class="markdown-elite">
+                    <!-- Markdown injected here -->
+                </article>
+            </div>
+        </main>
+    </div>
+
+    <!-- Data -->
+    <script src="dashboard_data.js"></script>
+    
+    <script>
+        // State Management
+        let userProgress = JSON.parse(localStorage.getItem(studyData.localStorageKey)) || {};
+        let activeModuleId = null;
+        let radarChartInstance = null;
+
+        function initApp() {
+            // Setup Visuals
+            document.getElementById('app-title').textContent = studyData.title;
+            document.getElementById('app-subtitle').textContent = studyData.subtitle;
+            
+            renderNavigation();
+            updateDashboardMetrics();
+            initRadarChart();
+            
+            // Markdown & Mermaid Config
+            mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+            marked.setOptions({
+                highlight: function(code, lang) { return code; },
+                breaks: true,
+                gfm: true
+            });
+            
+            // Loader handling
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 800);
+            }, 1000);
+
+            // Event Listeners
+            document.getElementById('app-title').addEventListener('click', showDashboard);
+            document.getElementById('app-title').style.cursor = 'pointer';
+            document.getElementById('completion-trigger').addEventListener('click', () => toggleModuleCompletion(activeModuleId));
+        }
+
+        function renderNavigation() {
+            const nav = document.getElementById('axis-navigation');
+            nav.innerHTML = '';
+            
+            studyData.axes.forEach((axis, axisIndex) => {
+                const group = document.createElement('div');
+                group.className = 'navigation-group';
+                group.innerHTML = `<div class="nav-group-title">${axis.title}</div>`;
+                
+                const ul = document.createElement('ul');
+                ul.className = 'nav-list';
+                
+                axis.modules.forEach(mod => {
+                    const isDone = userProgress[mod.id];
+                    const li = document.createElement('li');
+                    li.className = `nav-item ${isDone ? 'completed' : ''}`;
+                    li.id = `nav-item-${mod.id}`;
+                    li.setAttribute('data-id', mod.id);
+                    li.onclick = () => openModule(mod.id);
+                    
+                    li.innerHTML = `
+                        <span class="nav-id">${mod.id}</span>
+                        <span class="nav-title">${mod.title}</span>
+                        <div class="check-circle" id="check-${mod.id}"></div>
+                    `;
+                    ul.appendChild(li);
+                });
+                
+                group.appendChild(ul);
+                nav.appendChild(group);
+            });
+        }
+
+        function openModule(id) {
+            activeModuleId = id;
+            
+            // Switch Views
+            document.getElementById('dashboard-view').style.display = 'none';
+            document.getElementById('reader-view').style.display = 'block';
+            
+            // Highlight Nav
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`nav-item-${id}`).classList.add('active');
+            
+            // Render Content
+            const content = moduleContents[id] || "# Content Missing";
+            const canvas = document.getElementById('article-canvas');
+            
+            // Inject and render
+            canvas.innerHTML = marked.parse(content);
+            document.getElementById('active-module-title').textContent = id + ' | ' + studyData.axes.find(a => a.modules.find(m => m.id === id)).modules.find(m => m.id === id).title;
+            
+            if (window.mermaid) {
+                setTimeout(() => {
+                    document.querySelectorAll('.language-mermaid').forEach(el => {
+                        const code = el.textContent;
+                        const container = el.parentElement;
+                        container.outerHTML = `<div class="mermaid">${code}</div>`;
+                    });
+                    mermaid.init(undefined, ".mermaid");
+                }, 50);
+            }
+            
+            updateCompletionButtonState(id);
+            document.getElementById('content-anchor').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleModuleCompletion(id) {
+            userProgress[id] = !userProgress[id];
+            localStorage.setItem(studyData.localStorageKey, JSON.stringify(userProgress));
+            
+            renderNavigation();
+            updateDashboardMetrics();
+            updateCompletionButtonState(id);
+            updateRadarChart();
+            
+            // Re-apply active class
+            document.getElementById(`nav-item-${id}`).classList.add('active');
+        }
+
+        function updateCompletionButtonState(id) {
+            const btn = document.getElementById('completion-trigger');
+            if (userProgress[id]) {
+                btn.textContent = 'マスター済み ✓';
+                btn.classList.add('active');
+            } else {
+                btn.textContent = '完了としてマーク';
+                btn.classList.remove('active');
+            }
+        }
+
+        function updateDashboardMetrics() {
+            const allModules = studyData.axes.flatMap(a => a.modules);
+            const totalCount = allModules.length;
+            const completedCount = allModules.filter(m => userProgress[m.id]).length;
+            const percent = Math.round((completedCount / totalCount) * 100) || 0;
+            
+            document.getElementById('global-progress-value').textContent = percent + '%';
+            document.getElementById('global-completed-count').textContent = `${completedCount}/${totalCount}`;
+            document.getElementById('welcome-message').textContent = percent === 100 ? "SQL Mastered." : "Architect the Data.";
+        }
+
+        function initRadarChart() {
+            const ctx = document.getElementById('masteryRadar').getContext('2d');
+            const labels = studyData.axes.map(a => a.title.split(":")[0]); // "Phase 1" etc
+            const data = getPhaseProgressData();
+
+            radarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Mastery',
+                        data: data,
+                        backgroundColor: 'rgba(6, 182, 212, 0.2)',
+                        borderColor: '#06b6d4',
+                        pointBackgroundColor: '#3b82f6',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            pointLabels: { color: '#94a3b8', font: { size: 14, weight: 'bold' } },
+                            ticks: { display: false, stepSize: 20 },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function updateRadarChart() {
+            radarChartInstance.data.datasets[0].data = getPhaseProgressData();
+            radarChartInstance.update();
+        }
+
+        function getPhaseProgressData() {
+            return studyData.axes.map(axis => {
+                const total = axis.modules.length;
+                const done = axis.modules.filter(m => userProgress[m.id]).length;
+                return (done / total) * 100;
+            });
+        }
+
+        function showDashboard() {
+            document.getElementById('dashboard-view').style.display = 'flex';
+            document.getElementById('reader-view').style.display = 'none';
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        }
+
+        // Boot
+        window.onload = initApp;
+    </script>
+</body>
+</html>
