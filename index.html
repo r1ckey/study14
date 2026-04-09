@@ -415,9 +415,23 @@
             initRadarChart();
             
             // Markdown & Mermaid Config
-            mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
-            marked.setOptions({
-                highlight: function(code, lang) { return code; },
+            mermaid.initialize({ 
+                startOnLoad: false, 
+                theme: 'dark', 
+                securityLevel: 'loose',
+                flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+            });
+
+            // Custom renderer for mermaid blocks
+            const renderer = new marked.Renderer();
+            renderer.code = function(code, lang) {
+                if (lang === 'mermaid') {
+                    return `<div class="mermaid">${code}</div>`;
+                }
+                return `<pre><code class="language-${lang}">${code}</code></pre>`;
+            };
+            marked.setOptions({ 
+                renderer: renderer,
                 breaks: true,
                 gfm: true
             });
@@ -425,8 +439,10 @@
             // Loader handling
             setTimeout(() => {
                 const loader = document.getElementById('loader');
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 800);
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 800);
+                }
             }, 1000);
 
             // Event Listeners
@@ -489,11 +505,6 @@
             
             if (window.mermaid) {
                 setTimeout(() => {
-                    document.querySelectorAll('.language-mermaid').forEach(el => {
-                        const code = el.textContent;
-                        const container = el.parentElement;
-                        container.outerHTML = `<div class="mermaid">${code}</div>`;
-                    });
                     mermaid.init(undefined, ".mermaid");
                 }, 50);
             }
